@@ -6,6 +6,7 @@ statement PDFs are available, no bank parser is registered, so
 """
 from __future__ import annotations
 
+from app.workers.bancolombia_parser import BancolombiaParser
 from app.workers.base import BankParserStrategy
 
 # banco (UPPERCASE) -> strategy instance. Populated once concrete parsers
@@ -29,3 +30,6 @@ def get_parser(banco: str) -> BankParserStrategy:
             f"No hay parser registrado para banco '{banco}'. "
             f"Disponibles: {disponibles}."
         ) from None
+
+
+register_parser(BancolombiaParser())
