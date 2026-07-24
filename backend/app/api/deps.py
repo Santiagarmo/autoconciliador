@@ -7,22 +7,31 @@ implementation.
 """
 from __future__ import annotations
 
-from typing import Annotated
+from collections.abc import Callable, Coroutine
+from typing import Annotated, Any
+from uuid import UUID
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.security import decode_token
 from app.db.session import get_session
+from app.domain.enums import RolUsuario
+from app.models.user import Usuario
 from app.repositories import (
     ConciliacionRepository,
     IConciliacionRepository,
     IMovimientoBancarioRepository,
     IPagoDeclaradoRepository,
     IPedidoRepository,
+    IUserRepository,
     MovimientoBancarioRepository,
     PagoDeclaradoRepository,
     PedidoRepository,
+    UserRepository,
 )
+from app.services.reconciliation_service import ReconciliationService
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
@@ -49,6 +58,10 @@ def get_conciliacion_repository(
     return ConciliacionRepository(session)
 
 
+def get_user_repository(session: SessionDep) -> IUserRepository:
+    return UserRepository(session)
+
+
 PedidoRepositoryDep = Annotated[
     IPedidoRepository, Depends(get_pedido_repository)
 ]
@@ -61,3 +74,77 @@ MovimientoBancarioRepositoryDep = Annotated[
 ConciliacionRepositoryDep = Annotated[
     IConciliacionRepository, Depends(get_conciliacion_repository)
 ]
+UserRepositoryDep = Annotated[IUserRepository, Depends(get_user_repository)]
+
+
+# --- Service providers -----------------------------------------------------
+
+def get_reconciliation_service(
+    session: SessionDep,
+    pago_repo: PagoDeclaradoRepositoryDep,
+    movimiento_repo: MovimientoBancarioRepositoryDep,
+    conciliacion_repo: ConciliacionRepositoryDep,
+    pedido_repo: PedidoRepositoryDep,
+) -> ReconciliationService:
+    return ReconciliationService(
+        session,
+        pago_repo=pago_repo,
+        movimiento_repo=movimiento_repo,
+        conciliacion_repo=conciliacion_repo,
+        pedido_repo=pedido_repo,
+    )
+
+
+ReconciliationServiceDep = Annotated[
+    ReconciliationService, Depends(get_reconciliation_service)
+]
+
+
+# --- Authentication --------------------------------------------------------
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+
+_credentials_exc = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Credenciales inválidas o expiradas.",
+    headers={"WWW-Authenticate": "Bearer"},
+)
+
+
+async def get_current_user(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    user_repo: UserRepositoryDep,
+) -> Usuario:
+    claims = decode_token(token)
+    if claims is None:
+        raise _credentials_exc
+    subject = claims.get("sub")
+    if not subject:
+        raise _credentials_exc
+    try:
+        user_id = UUID(subject)
+    except ValueError:
+        raise _credentials_exc
+    user = await user_repo.get(user_id)
+    if user is None or not user.activo:
+        raise _credentials_exc
+    return user
+
+
+CurrentUserDep = Annotated[Usuario, Depends(get_current_user)]
+
+
+def require_role(
+    *roles: RolUsuario,
+) -> Callable[[Usuario], Coroutine[Any, Any, Usuario]]:
+    """Build a dependency that allows only the given roles (403 otherwise)."""
+
+    async def _checker(current: CurrentUserDep) -> Usuario:
+        if current.rol not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No tiene permisos para esta acción.",
+            )
+        return current
+
+    return _checker

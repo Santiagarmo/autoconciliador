@@ -11,9 +11,13 @@ alembic==1.14.0
 pydantic==2.10.4
 pydantic-settings==2.7.1
 
-# --- Auth (staged for Phase 4) ---
+# --- Auth (Phase 4) ---
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
+# Pin bcrypt <4.1: passlib 1.7.4's version probe breaks on bcrypt 4.1+
+# (raises "password cannot be longer than 72 bytes").
+bcrypt==4.0.1
+python-multipart==0.0.20
 
 # --- PDF parsing (staged for Phase 3) ---
 pdfplumber==0.11.4
@@ -22,3 +26,4 @@ PyMuPDF==1.25.1
 # --- Testing (dev) ---
 pytest==8.3.4
 pytest-asyncio==0.25.0
+httpx==0.28.1

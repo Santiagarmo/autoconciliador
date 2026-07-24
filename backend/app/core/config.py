@@ -19,5 +19,20 @@ class Settings(BaseSettings):
     # Toggle SQL echo for debugging.
     DB_ECHO: bool = False
 
+    # --- JWT auth (Phase 4) ---
+    # Secret used to sign access tokens. MUST be overridden in .env with a
+    # strong random value (e.g. `openssl rand -hex 32`). The default is only
+    # a placeholder so the app boots in dev.
+    SECRET_KEY: str = "change-me-in-env-generate-with-openssl-rand-hex-32"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+
+    # Comma-separated origins allowed by CORS (frontend Vue in Phase 5).
+    CORS_ORIGINS: str = "http://localhost:5173"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
+
 
 settings = Settings()

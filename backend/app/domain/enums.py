@@ -32,3 +32,11 @@ class EstadoMovimiento(str, enum.Enum):
 class TipoConciliacion(str, enum.Enum):
     AUTOMATICA = "AUTOMATICA"
     MANUAL_AUDITOR = "MANUAL_AUDITOR"
+
+
+class RolUsuario(str, enum.Enum):
+    """System roles. The advisor registers payments but never dispatches;
+    the auditor reconciles manually and releases orders for dispatch."""
+
+    ASESOR = "ASESOR"
+    AUDITOR = "AUDITOR"

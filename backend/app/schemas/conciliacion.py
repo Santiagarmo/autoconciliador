@@ -27,3 +27,11 @@ class ConciliacionRead(BaseModel):
     movimiento_bancario_id: UUID
     tipo_conciliacion: TipoConciliacion
     created_at: datetime
+
+
+class ReconSummaryRead(BaseModel):
+    """Result of a reconciliation run."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    conciliados: int
