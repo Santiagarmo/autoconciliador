@@ -6,14 +6,17 @@ No model is installed or called by this module. It exists so
 path itself fully exercised by tests today via ``NullStatementReviewer``
 (the default) and ``StubReviewer`` (test-only, ``tests/conftest.py``).
 
-Deploy target: Qwen 2.5 7B Instruct, running on a separate machine with a
-dedicated GPU (NOT this host — see docs/... or ask before assuming
-otherwise), served through any OpenAI-compatible HTTP endpoint (Ollama,
-llama.cpp server, vLLM). This project may itself be deployed onto that same
-machine; either way, this backend talks to the model over HTTP via
-``LLM_BASE_URL`` — it never loads the model in-process. The six settings in
-``app.core.config`` are the ONLY thing a deploy decision touches; this
-module's code is identical regardless of what sits behind that URL.
+Deploy target: Granite 4.1 3B, running on the same Hostinger VPS as this
+backend, CPU-only (no GPU there — see docs/IMPLEMENTACION-IA-VERIFICACION-EXTRACTOS.md
+§ Consumo y dimensionamiento before assuming otherwise), served through any
+OpenAI-compatible HTTP endpoint (Ollama, llama.cpp server, vLLM). A GPU box
+remains a valid alternative deploy (e.g. granite4.1:8b once GPU is available);
+either way, this backend talks to the model over HTTP via ``LLM_BASE_URL`` —
+it never loads the model in-process. The six settings in ``app.core.config``
+are the ONLY thing a deploy decision touches; this module's code is identical
+regardless of what sits behind that URL. Model choice is sized for CPU
+latency, not just RAM: a 7-8B model on 2 vCPU runs ~2.5-3 min per verdict,
+past any sane timeout — see the doc for the numbers behind this pick.
 
 SAFETY RULE — the reviewer's verdict is advisory ONLY. It is persisted to
 ``VerificacionExtracto.revision_llm`` and shown to a human. It must never:
@@ -100,8 +103,8 @@ class NullStatementReviewer(StatementReviewer):
 
 
 class OpenAICompatStatementReviewer(StatementReviewer):
-    """DEFERRED: pendiente de que el endpoint Qwen esté arriba en la PC con
-    GPU (ver ``LLM_BASE_URL``). Sigue el idiom de ``NequiParser``: clase
+    """DEFERRED: pendiente de que el endpoint Granite esté arriba en el VPS
+    (ver ``LLM_BASE_URL``). Sigue el idiom de ``NequiParser``: clase
     nombrada, sin cablear, ``NotImplementedError`` explícito — nadie la
     instancia hasta que ``get_statement_reviewer()`` decida hacerlo.
 
@@ -115,7 +118,7 @@ class OpenAICompatStatementReviewer(StatementReviewer):
     ) -> StatementReviewVerdict | None:
         raise NotImplementedError(
             "OpenAICompatStatementReviewer pendiente del endpoint LLM "
-            "(LLM_BASE_URL) en la máquina donde corra Qwen 2.5 7B Instruct."
+            "(LLM_BASE_URL) en la máquina donde corra Granite 4.1 3B."
         )
 
 
