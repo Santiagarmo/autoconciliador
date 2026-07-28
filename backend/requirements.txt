@@ -23,7 +23,9 @@ python-multipart==0.0.20
 pdfplumber==0.11.4
 PyMuPDF==1.25.1
 
+# --- HTTP client (outbound: StatementReviewer tier 2 -> endpoint LLM) ---
+httpx==0.28.1
+
 # --- Testing (dev) ---
 pytest==8.3.4
 pytest-asyncio==0.25.0
-httpx==0.28.1
