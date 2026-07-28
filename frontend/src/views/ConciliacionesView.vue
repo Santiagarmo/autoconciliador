@@ -42,11 +42,11 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="flex flex-col gap-8">
-    <div class="flex flex-wrap items-end justify-between gap-4 border-b border-rule pb-6">
+  <div class="stagger flex flex-col gap-8">
+    <div class="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-6">
       <div>
-        <h1 class="font-display text-3xl text-ink">Conciliaciones</h1>
-        <p class="mt-1 font-mono text-xs text-ink-muted">Cruce entre pagos declarados y movimientos bancarios.</p>
+        <h1 class="font-display text-title text-fg">Conciliaciones</h1>
+        <p class="mt-1 font-mono text-xs text-fg-muted">Cruce entre pagos declarados y movimientos bancarios.</p>
       </div>
       <div class="flex gap-2">
         <BaseButton variant="secondary" @click="load">Refrescar</BaseButton>
@@ -60,20 +60,22 @@ onMounted(load);
       </div>
     </div>
 
-    <p v-if="!canRunReconciliation" class="border-l-2 border-indigo-slate bg-indigo-slate/5 px-3 py-2 font-mono text-xs text-ink-muted">
+    <p v-if="!canRunReconciliation" class="rounded-sm border-l-2 border-signal-info bg-signal-info/10 px-3 py-2 font-mono text-xs text-fg-muted">
       Solo el rol Auditor puede ejecutar el motor de conciliación manualmente.
     </p>
 
-    <SpinnerLoader v-if="conciliacionesStore.isLoading" label="Cargando conciliaciones..." />
-    <EmptyState
-      v-else-if="conciliacionesStore.items.length === 0"
-      title="Aún no hay conciliaciones"
-      description="Registra pagos, sube extractos y ejecuta el cruce para verlas aquí."
-    />
-    <BaseTable v-else :columns="columns" :rows="conciliacionesStore.items" :row-key="(row) => row.id">
-      <template #cell-tipo_conciliacion="{ row }">
-        <EstadoBadge kind="conciliacion" :estado="row.tipo_conciliacion" />
-      </template>
-    </BaseTable>
+    <Transition name="swap" mode="out-in">
+      <SpinnerLoader v-if="conciliacionesStore.isLoading" label="Cargando conciliaciones..." />
+      <EmptyState
+        v-else-if="conciliacionesStore.items.length === 0"
+        title="Aún no hay conciliaciones"
+        description="Registra pagos, sube extractos y ejecuta el cruce para verlas aquí."
+      />
+      <BaseTable v-else :columns="columns" :rows="conciliacionesStore.items" :row-key="(row) => row.id">
+        <template #cell-tipo_conciliacion="{ row }">
+          <EstadoBadge kind="conciliacion" :estado="row.tipo_conciliacion" />
+        </template>
+      </BaseTable>
+    </Transition>
   </div>
 </template>

@@ -10,25 +10,35 @@ const NAV_ITEMS = [
 </script>
 
 <template>
-  <aside class="hidden w-60 shrink-0 flex-col border-r border-rule bg-paper lg:flex">
+  <aside class="hidden w-60 shrink-0 flex-col border-r border-line bg-surface lg:flex">
     <div class="flex h-16 items-center gap-2 px-5">
-      <span class="font-mono text-xs text-ochre">AC/</span>
-      <span class="font-display text-base font-medium tracking-tight text-ink">AutoConciliador</span>
+      <span class="font-mono text-xs text-steel">AC/</span>
+      <span class="font-display text-base font-medium tracking-tight text-fg">AutoConciliador</span>
     </div>
     <nav class="flex flex-1 flex-col gap-0.5 px-3 py-2">
       <RouterLink
         v-for="item in NAV_ITEMS"
         :key="item.to"
         :to="item.to"
-        class="flex items-center gap-3 border-l-2 border-transparent px-3 py-2.5 font-mono text-[13px] uppercase tracking-wide text-ink-muted hover:text-ink"
-        active-class="border-ochre text-ochre hover:text-ochre"
+        class="group relative flex items-center gap-3 rounded-sm px-3 py-2.5 font-mono text-[13px] uppercase tracking-wide text-fg-muted transition-colors duration-150 hover:text-fg"
+        active-class="is-active text-steel hover:text-steel"
       >
+        <span class="nav-indicator absolute inset-y-0 left-0 w-0.5 origin-top scale-y-0 bg-steel opacity-0 transition-[opacity,transform] duration-200 ease-out-expo" />
+        <span class="nav-bg absolute inset-0 -z-10 scale-95 rounded-sm bg-steel-tint opacity-0 transition-[opacity,transform] duration-200 ease-out-expo" />
         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
           <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
         </svg>
-        <span class="text-ink-faint">{{ item.index }}</span>
+        <span class="text-fg-faint">{{ item.index }}</span>
         {{ item.label }}
       </RouterLink>
     </nav>
   </aside>
 </template>
+
+<style scoped>
+.is-active .nav-indicator,
+.is-active .nav-bg {
+  transform: scale(1);
+  opacity: 1;
+}
+</style>

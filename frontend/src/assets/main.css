@@ -5,19 +5,20 @@
 @layer base {
   html {
     @apply antialiased;
+    color-scheme: dark;
   }
   body {
-    @apply bg-paper font-sans text-ink;
+    @apply bg-surface font-sans text-fg;
     position: relative;
   }
-  /* Fixed paper-grain texture — sells the ledger surface without an image asset. */
+  /* Grano fijo muy sutil — da textura de superficie sin pesar en un asset. */
   body::before {
     content: "";
     position: fixed;
     inset: 0;
     z-index: 0;
     pointer-events: none;
-    opacity: 0.035;
+    opacity: 0.02;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
   #app {
@@ -25,7 +26,7 @@
     z-index: 1;
   }
   :focus-visible {
-    outline: 2px solid #a8571c;
+    outline: 2px solid #4c7df0;
     outline-offset: 2px;
   }
 }
@@ -36,30 +37,54 @@
   }
 }
 
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Entrada escalonada: ritmo ajustable vía --stagger-step (default 40ms). */
+.stagger {
+  --stagger-step: 40ms;
 }
-
 .stagger > * {
   animation: rise 0.4s ease-out both;
 }
-.stagger > *:nth-child(1) { animation-delay: 0ms; }
-.stagger > *:nth-child(2) { animation-delay: 40ms; }
-.stagger > *:nth-child(3) { animation-delay: 80ms; }
-.stagger > *:nth-child(4) { animation-delay: 120ms; }
-.stagger > *:nth-child(5) { animation-delay: 160ms; }
-.stagger > *:nth-child(6) { animation-delay: 200ms; }
-.stagger > *:nth-child(n + 7) { animation-delay: 240ms; }
+.stagger > *:nth-child(1) { animation-delay: calc(var(--stagger-step) * 0); }
+.stagger > *:nth-child(2) { animation-delay: calc(var(--stagger-step) * 1); }
+.stagger > *:nth-child(3) { animation-delay: calc(var(--stagger-step) * 2); }
+.stagger > *:nth-child(4) { animation-delay: calc(var(--stagger-step) * 3); }
+.stagger > *:nth-child(5) { animation-delay: calc(var(--stagger-step) * 4); }
+.stagger > *:nth-child(6) { animation-delay: calc(var(--stagger-step) * 5); }
+.stagger > *:nth-child(7) { animation-delay: calc(var(--stagger-step) * 6); }
+.stagger > *:nth-child(8) { animation-delay: calc(var(--stagger-step) * 7); }
+.stagger > *:nth-child(9) { animation-delay: calc(var(--stagger-step) * 8); }
+.stagger > *:nth-child(10) { animation-delay: calc(var(--stagger-step) * 9); }
+.stagger > *:nth-child(n + 11) { animation-delay: calc(var(--stagger-step) * 10); }
+
+/* Transición de ruta — ver App.vue */
+.page-enter-active {
+  animation: page-in 0.18s ease-out both;
+}
+.page-leave-active {
+  transition: opacity 0.1s ease-in;
+}
+.page-leave-to {
+  opacity: 0;
+}
+
+/* Swap entre estados (loading / vacío / contenido) — ver vistas con SpinnerLoader */
+.swap-enter-active {
+  animation: page-in 0.2s ease-out both;
+}
+.swap-leave-active {
+  transition: opacity 0.12s ease-in;
+}
+.swap-leave-to {
+  opacity: 0;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .stagger > * {
-    animation: none;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

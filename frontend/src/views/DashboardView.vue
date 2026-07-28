@@ -78,15 +78,15 @@ onMounted(loadPedidos);
 
 <template>
   <div class="flex flex-col gap-8">
-    <div class="flex flex-wrap items-end justify-between gap-4 border-b border-rule pb-6">
+    <div class="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-6">
       <div>
-        <h1 class="font-display text-3xl text-ink">Pedidos</h1>
-        <p class="mt-1 font-mono text-xs text-ink-muted">Estado de los pedidos y su verificación de pago.</p>
+        <h1 class="font-display text-title text-fg">Pedidos</h1>
+        <p class="mt-1 font-mono text-xs text-fg-muted">Estado de los pedidos y su verificación de pago.</p>
       </div>
       <BaseButton @click="isModalOpen = true">+ Nuevo pedido</BaseButton>
     </div>
 
-    <div class="stagger grid grid-cols-1 gap-8 border-b border-rule pb-8 sm:grid-cols-3">
+    <div class="stagger grid grid-cols-1 gap-8 border-b border-line pb-8 sm:grid-cols-3">
       <StatCard label="Total de pedidos" :value="stats.total" tone="brand" />
       <StatCard label="En alerta de pago" :value="stats.enAlerta" tone="danger" />
       <StatCard label="Listos para despacho" :value="stats.listos" tone="success" />
@@ -96,27 +96,29 @@ onMounted(loadPedidos);
       <BaseSelect v-model="estadoFilter" label="Filtrar por estado" :options="estadoOptions" />
     </div>
 
-    <SpinnerLoader v-if="pedidosStore.isLoading" label="Cargando pedidos..." />
-    <EmptyState
-      v-else-if="filteredPedidos.length === 0"
-      title="No hay pedidos"
-      description="Crea el primer pedido para empezar a conciliar pagos."
-    />
-    <BaseTable
-      v-else
-      :columns="columns"
-      :rows="filteredPedidos"
-      :row-key="(row) => row.id"
-    >
-      <template #cell-estado_pedido="{ row }">
-        <EstadoBadge kind="pedido" :estado="row.estado_pedido" />
-      </template>
-      <template #cell-codigo_pedido="{ row }">
-        <button class="font-mono font-medium text-ochre hover:underline" @click="goToDetail(row)">
-          {{ row.codigo_pedido }}
-        </button>
-      </template>
-    </BaseTable>
+    <Transition name="swap" mode="out-in">
+      <SpinnerLoader v-if="pedidosStore.isLoading" label="Cargando pedidos..." />
+      <EmptyState
+        v-else-if="filteredPedidos.length === 0"
+        title="No hay pedidos"
+        description="Crea el primer pedido para empezar a conciliar pagos."
+      />
+      <BaseTable
+        v-else
+        :columns="columns"
+        :rows="filteredPedidos"
+        :row-key="(row) => row.id"
+      >
+        <template #cell-estado_pedido="{ row }">
+          <EstadoBadge kind="pedido" :estado="row.estado_pedido" />
+        </template>
+        <template #cell-codigo_pedido="{ row }">
+          <button class="font-mono font-medium text-steel transition-colors hover:text-steel-deep hover:underline" @click="goToDetail(row)">
+            {{ row.codigo_pedido }}
+          </button>
+        </template>
+      </BaseTable>
+    </Transition>
 
     <BaseModal :open="isModalOpen" title="Nuevo pedido" @close="isModalOpen = false">
       <PedidoForm :is-submitting="isSubmitting" @submit="handleCreate" />

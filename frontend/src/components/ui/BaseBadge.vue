@@ -6,11 +6,11 @@ withDefaults(defineProps<{ label: string; variant?: BadgeVariant }>(), {
 });
 
 const VARIANT_CLASSES: Record<BadgeVariant, string> = {
-  neutral: "bg-paper-sunk text-ink-muted border-rule-strong",
-  info: "bg-indigo-slate/10 text-indigo-slate border-indigo-slate",
-  success: "bg-moss/10 text-moss border-moss",
-  warning: "bg-amber-deep/10 text-amber-deep border-amber-deep",
-  danger: "bg-oxide/10 text-oxide border-oxide",
+  neutral: "bg-surface-sunk text-fg-muted border-line-strong",
+  info: "bg-signal-info/10 text-signal-info border-signal-info",
+  success: "bg-signal-pos/10 text-signal-pos border-signal-pos",
+  warning: "bg-signal-warn/10 text-signal-warn border-signal-warn",
+  danger: "bg-signal-neg/10 text-signal-neg border-signal-neg",
 };
 </script>
 

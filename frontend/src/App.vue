@@ -17,7 +17,15 @@ onMounted(() => {
 <template>
   <ToastContainer />
   <AppShell v-if="!route.meta.public">
-    <router-view />
+    <router-view v-slot="{ Component }">
+      <Transition name="page" mode="out-in">
+        <component :is="Component" />
+      </Transition>
+    </router-view>
   </AppShell>
-  <router-view v-else />
+  <router-view v-else v-slot="{ Component }">
+    <Transition name="page" mode="out-in">
+      <component :is="Component" />
+    </Transition>
+  </router-view>
 </template>

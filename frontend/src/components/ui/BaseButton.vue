@@ -15,10 +15,10 @@ withDefaults(
 );
 
 const VARIANT_CLASSES: Record<string, string> = {
-  primary: "bg-ochre text-paper-raised hover:bg-ochre-deep",
-  secondary: "bg-transparent text-ink ring-1 ring-inset ring-rule hover:ring-rule-strong hover:bg-paper-sunk",
-  danger: "bg-oxide text-paper-raised hover:bg-oxide/85",
-  ghost: "bg-transparent text-ink-muted hover:text-ink underline-offset-4 hover:underline",
+  primary: "bg-steel text-fg hover:bg-steel-deep",
+  secondary: "bg-transparent text-fg ring-1 ring-inset ring-line hover:ring-line-strong hover:bg-surface-sunk",
+  danger: "bg-signal-neg text-fg hover:bg-signal-neg/85",
+  ghost: "bg-transparent text-fg-muted hover:text-fg underline-offset-4 hover:underline",
 };
 </script>
 
@@ -26,7 +26,7 @@ const VARIANT_CLASSES: Record<string, string> = {
   <button
     :type="type"
     :disabled="disabled || loading"
-    class="inline-flex items-center justify-center gap-2 rounded-sm px-3.5 py-2 font-sans text-[13px] font-medium uppercase tracking-wide transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+    class="inline-flex items-center justify-center gap-2 rounded-sm px-3.5 py-2 font-sans text-[13px] font-medium uppercase tracking-wide transition-[transform,background-color,box-shadow] duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
     :class="VARIANT_CLASSES[variant]"
   >
     <svg

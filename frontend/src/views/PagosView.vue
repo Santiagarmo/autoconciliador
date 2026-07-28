@@ -56,32 +56,34 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="flex flex-col gap-8">
-    <div class="flex flex-wrap items-end justify-between gap-4 border-b border-rule pb-6">
+  <div class="stagger flex flex-col gap-8">
+    <div class="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-6">
       <div>
-        <h1 class="font-display text-3xl text-ink">Pagos declarados</h1>
-        <p class="mt-1 font-mono text-xs text-ink-muted">Lo que el asesor registró a partir del comprobante de WhatsApp.</p>
+        <h1 class="font-display text-title text-fg">Pagos declarados</h1>
+        <p class="mt-1 font-mono text-xs text-fg-muted">Lo que el asesor registró a partir del comprobante de WhatsApp.</p>
       </div>
       <BaseButton @click="isModalOpen = true">+ Registrar pago</BaseButton>
     </div>
 
-    <SpinnerLoader v-if="pagosStore.isLoading" label="Cargando pagos..." />
-    <EmptyState
-      v-else-if="pagosStore.items.length === 0"
-      title="No hay pagos registrados"
-      description="Registra el pago de un pedido usando el número de referencia del comprobante."
-    />
-    <BaseTable v-else :columns="columns" :rows="pagosStore.items" :row-key="(row) => row.id">
-      <template #cell-banco_destino="{ row }">
-        <div>
-          <p class="font-medium text-ink">{{ row.banco_destino }}</p>
-          <p class="font-mono text-xs text-ink-faint">{{ codigoPedido(row.pedido_id) }}</p>
-        </div>
-      </template>
-      <template #cell-estado_pago="{ row }">
-        <EstadoBadge kind="pago" :estado="row.estado_pago" />
-      </template>
-    </BaseTable>
+    <Transition name="swap" mode="out-in">
+      <SpinnerLoader v-if="pagosStore.isLoading" label="Cargando pagos..." />
+      <EmptyState
+        v-else-if="pagosStore.items.length === 0"
+        title="No hay pagos registrados"
+        description="Registra el pago de un pedido usando el número de referencia del comprobante."
+      />
+      <BaseTable v-else :columns="columns" :rows="pagosStore.items" :row-key="(row) => row.id">
+        <template #cell-banco_destino="{ row }">
+          <div>
+            <p class="font-medium text-fg">{{ row.banco_destino }}</p>
+            <p class="font-mono text-xs text-fg-faint">{{ codigoPedido(row.pedido_id) }}</p>
+          </div>
+        </template>
+        <template #cell-estado_pago="{ row }">
+          <EstadoBadge kind="pago" :estado="row.estado_pago" />
+        </template>
+      </BaseTable>
+    </Transition>
 
     <BaseModal :open="isModalOpen" title="Registrar pago" @close="isModalOpen = false">
       <PagoForm :pedidos="pedidosStore.items" :is-submitting="isSubmitting" @submit="handleCreate" />

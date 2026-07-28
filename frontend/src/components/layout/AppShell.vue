@@ -4,7 +4,7 @@ import AppSidebar from "./AppSidebar.vue";
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-paper">
+  <div class="flex min-h-screen bg-surface">
     <AppSidebar />
     <div class="flex min-w-0 flex-1 flex-col">
       <AppHeader />

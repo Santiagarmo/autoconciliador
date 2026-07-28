@@ -17,15 +17,15 @@ const id = `select-${Math.random().toString(36).slice(2, 9)}`;
 
 <template>
   <div class="flex flex-col gap-1.5">
-    <label v-if="label" :for="id" class="font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-ink-faint">
+    <label v-if="label" :for="id" class="font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-fg-faint">
       {{ label }}
-      <span v-if="required" class="text-oxide">*</span>
+      <span v-if="required" class="text-signal-neg">*</span>
     </label>
     <select
       :id="id"
       :required="required"
       :value="modelValue"
-      class="border-0 border-b border-rule bg-transparent px-0.5 py-2 text-sm text-ink focus:border-b-2 focus:border-ochre focus:outline-none"
+      class="rounded-sm border-0 border-b-2 border-line bg-surface-sunk px-2.5 py-2 text-sm text-fg transition-[border-color,background-color] duration-200 focus:border-steel focus:outline-none"
       @change="$emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
     >
       <option v-if="placeholder" value="" disabled>{{ placeholder }}</option>

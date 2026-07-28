@@ -15,7 +15,12 @@ from uuid import uuid4
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 import app.models  # noqa: F401 — register ORM metadata
 from app.api.deps import get_current_user
@@ -33,7 +38,11 @@ from app.workers.base import BankParserStrategy
 
 @pytest_asyncio.fixture
 async def engine():
-    eng = create_async_engine(settings.DATABASE_URL)
+    # Dedicated test DB (see TEST_DATABASE_URL) — never the dev database, so
+    # tests that commit for real (committing_session) can't pollute demo data
+    # seeded via scripts/seed_demo.py, and a stray `--reset` there can't wipe
+    # a test in flight.
+    eng = create_async_engine(settings.TEST_DATABASE_URL)
     try:
         yield eng
     finally:
@@ -51,6 +60,68 @@ async def session(engine) -> AsyncSession:
         ) as s:
             yield s
         await conn.rollback()
+
+
+@pytest_asyncio.fixture
+async def committing_session():
+    """A plain, really-commits session against the test DB.
+
+    Use this (instead of ``session``) for tests that must exercise code
+    opening its own ``AsyncSessionLocal`` — e.g. the ingesta background task —
+    since that code can't see the outer-transaction savepoint the ``session``
+    fixture relies on. Rows are truncated at teardown so tests stay isolated
+    despite committing for real.
+    """
+    test_engine = create_async_engine(settings.TEST_DATABASE_URL)
+    session_factory = async_sessionmaker(
+        bind=test_engine, expire_on_commit=False
+    )
+    try:
+        async with session_factory() as s:
+            yield s
+    finally:
+        async with test_engine.begin() as conn:
+            await conn.execute(
+                text(
+                    "TRUNCATE conciliaciones, movimientos_bancarios, "
+                    "pagos_declarados, pedidos RESTART IDENTITY CASCADE"
+                )
+            )
+        await test_engine.dispose()
+
+
+@pytest_asyncio.fixture
+async def real_async_session_local(monkeypatch):
+    """Repoint ``app.db.session.AsyncSessionLocal`` at the test DB.
+
+    ``app.db.session.engine``/``AsyncSessionLocal`` are built at import time
+    from ``settings.DATABASE_URL`` (the dev DB) — that's what code like
+    ``_ingest_and_reconcile`` uses via a bare ``AsyncSessionLocal()`` call, out
+    of reach of the ``session``/``committing_session`` fixtures. Tests that
+    exercise that code path (without monkeypatching the function itself) need
+    the *global* factory swapped so it lands on the test DB.
+
+    Deliberately does NOT truncate on teardown — always pair this with
+    ``committing_session`` (which owns cleanup) in the same test. Fixture
+    teardown is LIFO, so if this fixture also truncated, its cleanup could
+    run *before* a still-open ``committing_session`` closes its own
+    transaction, deadlocking on the lock it holds.
+    """
+    import app.api.movimientos as movimientos_module
+    import app.db.session as session_module
+    import scripts.seed_demo as seed_demo_module
+
+    test_engine = create_async_engine(settings.TEST_DATABASE_URL)
+    test_session_local = async_sessionmaker(
+        bind=test_engine, expire_on_commit=False, autoflush=False
+    )
+    monkeypatch.setattr(session_module, "AsyncSessionLocal", test_session_local)
+    monkeypatch.setattr(movimientos_module, "AsyncSessionLocal", test_session_local)
+    monkeypatch.setattr(seed_demo_module, "AsyncSessionLocal", test_session_local)
+    try:
+        yield test_session_local
+    finally:
+        await test_engine.dispose()
 
 
 # --- Object factories (unique data so tests never collide) -----------------
@@ -111,6 +182,23 @@ async def client(session) -> AsyncClient:
     savepoint-isolated session, so endpoint ``commit()`` calls never persist.
     """
     app.dependency_overrides[get_session] = lambda: session
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as c:
+        yield c
+    app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def client_real_db(committing_session) -> AsyncClient:
+    """HTTP client bound to ``committing_session`` — real commits, real JWTs.
+
+    Unlike ``client``, this doesn't override ``get_current_user``: requests
+    must carry a genuine ``Authorization: Bearer`` token from a real
+    ``POST /auth/login``, so it's what full-path tests (login → ... →
+    reconciliation) use to exercise the actual auth dependency instead of the
+    ``as_role`` bypass.
+    """
+    app.dependency_overrides[get_session] = lambda: committing_session
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as c:
         yield c

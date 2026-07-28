@@ -47,11 +47,11 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="flex flex-col gap-8">
-    <div class="flex flex-wrap items-end justify-between gap-4 border-b border-rule pb-6">
+  <div class="stagger flex flex-col gap-8">
+    <div class="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-6">
       <div>
-        <h1 class="font-display text-3xl text-ink">Movimientos bancarios</h1>
-        <p class="mt-1 font-mono text-xs text-ink-muted">Fuente de verdad extraída de los extractos oficiales.</p>
+        <h1 class="font-display text-title text-fg">Movimientos bancarios</h1>
+        <p class="mt-1 font-mono text-xs text-fg-muted">Fuente de verdad extraída de los extractos oficiales.</p>
       </div>
       <div class="flex gap-2">
         <BaseButton variant="secondary" @click="load">Refrescar</BaseButton>
@@ -59,17 +59,19 @@ onMounted(load);
       </div>
     </div>
 
-    <SpinnerLoader v-if="movimientosStore.isLoading" label="Cargando movimientos..." />
-    <EmptyState
-      v-else-if="movimientosStore.items.length === 0"
-      title="No hay movimientos"
-      description="Sube un extracto en PDF para empezar a cruzar pagos."
-    />
-    <BaseTable v-else :columns="columns" :rows="movimientosStore.items" :row-key="(row) => row.id">
-      <template #cell-estado_movimiento="{ row }">
-        <EstadoBadge kind="movimiento" :estado="row.estado_movimiento" />
-      </template>
-    </BaseTable>
+    <Transition name="swap" mode="out-in">
+      <SpinnerLoader v-if="movimientosStore.isLoading" label="Cargando movimientos..." />
+      <EmptyState
+        v-else-if="movimientosStore.items.length === 0"
+        title="No hay movimientos"
+        description="Sube un extracto en PDF para empezar a cruzar pagos."
+      />
+      <BaseTable v-else :columns="columns" :rows="movimientosStore.items" :row-key="(row) => row.id">
+        <template #cell-estado_movimiento="{ row }">
+          <EstadoBadge kind="movimiento" :estado="row.estado_movimiento" />
+        </template>
+      </BaseTable>
+    </Transition>
 
     <BaseModal :open="isModalOpen" title="Subir extracto bancario" @close="isModalOpen = false">
       <IngestaForm :is-submitting="movimientosStore.isIngesting" @submit="handleIngesta" />

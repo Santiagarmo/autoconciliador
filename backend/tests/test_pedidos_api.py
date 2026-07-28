@@ -89,3 +89,25 @@ async def test_pedido_inexistente_404(client, as_role) -> None:
     as_role(RolUsuario.ASESOR)
     resp = await client.get(f"/api/pedidos/{uuid4()}")
     assert resp.status_code == 404
+
+
+async def test_filtro_estado_devuelve_solo_ese_estado(client, as_role) -> None:
+    """``?estado=`` is filtered in Python after ``repo.list()`` fetches every
+    row (see app/api/pedidos.py:47-49), not in SQL — a perf smell at scale,
+    but behaviorally it must still return exactly the matching subset. This
+    pins that contract so a future move to SQL-side filtering is provably
+    equivalent."""
+    as_role(RolUsuario.ASESOR)
+    pendiente = await client.post("/api/pedidos", json=_pedido_payload())
+    pendiente_id = pendiente.json()["id"]
+
+    otro = await client.post("/api/pedidos", json=_pedido_payload())
+    as_role(RolUsuario.AUDITOR)
+    await client.patch(f"/api/pedidos/{otro.json()['id']}", json={"estado_pedido": "DESPACHADO"})
+
+    filtrado = await client.get("/api/pedidos", params={"estado": "PENDIENTE_PAGO"})
+    assert filtrado.status_code == 200
+    ids = {p["id"] for p in filtrado.json()}
+    assert pendiente_id in ids
+    assert otro.json()["id"] not in ids
+    assert all(p["estado_pedido"] == "PENDIENTE_PAGO" for p in filtrado.json())

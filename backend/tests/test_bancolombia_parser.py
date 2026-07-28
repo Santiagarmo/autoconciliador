@@ -9,7 +9,8 @@ from __future__ import annotations
 from datetime import date, datetime, timezone
 from decimal import Decimal
 
-from app.workers.bancolombia_parser import parse_statement_lines
+from app.workers.bancolombia_parser import BancolombiaParser, parse_statement_lines
+from tests.fixtures.bancolombia_pdf import StatementRow, build_bancolombia_pdf
 
 SAME_YEAR = date(2026, 3, 31)
 SAME_YEAR_HASTA = date(2026, 6, 30)
@@ -97,3 +98,44 @@ def test_row_with_populated_sucursal_column_still_parses():
     assert rows[0].monto_real == Decimal("-500000.00")
     assert rows[0].saldo_posterior == Decimal("1056595.68")
     assert rows[0].numero_referencia is None
+
+
+# --- Real I/O half: BancolombiaParser.parse (pdfplumber read + header regex) -
+# Everything above exercises only the pure parse_statement_lines function.
+# These close that gap using a synthetic (PyMuPDF-generated) PDF instead of
+# a real, PII-bearing statement — see tests/fixtures/bancolombia_pdf.py.
+
+async def test_parser_lee_pdf_real_end_to_end():
+    pdf_bytes = build_bancolombia_pdf(
+        rows=[
+            StatementRow(4, 7, "TRANSFERENCIA DESDE NEQUI", Decimal("58900.00"), Decimal("962633.11")),
+            StatementRow(4, 7, "COMPRA EN TIENDA D1", Decimal("-29230.00"), Decimal("1267931.66")),
+        ],
+        desde=date(2026, 7, 1),
+        hasta=date(2026, 7, 31),
+    )
+    parser = BancolombiaParser()
+    rows = await parser.parse(pdf_bytes)
+
+    assert len(rows) == 2
+    assert rows[0].monto_real == Decimal("58900.00")
+    assert rows[0].fecha_movimiento == datetime(2026, 7, 4, tzinfo=timezone.utc)
+    assert rows[1].monto_real == Decimal("-29230.00")
+    assert all(r.banco_origen == "BANCOLOMBIA" for r in rows)
+
+
+async def test_parser_pdf_sin_encabezado_desde_hasta_lanza():
+    """A statement missing the DESDE/HASTA header can't resolve any row's
+    year — the parser must raise rather than silently guessing."""
+    import fitz
+    import pytest
+
+    doc = fitz.open()
+    page = doc.new_page()
+    page.insert_text((36, 50), "4/07 ALGO 1,000.00 2,000.00", fontname="cour", fontsize=9)
+    pdf_bytes = doc.tobytes()
+    doc.close()
+
+    parser = BancolombiaParser()
+    with pytest.raises(ValueError, match="DESDE/HASTA"):
+        await parser.parse(pdf_bytes)

@@ -19,6 +19,13 @@ class Settings(BaseSettings):
     # Toggle SQL echo for debugging.
     DB_ECHO: bool = False
 
+    # DSN for the test suite. Kept separate from DATABASE_URL so tests that
+    # commit for real (background-task style) never touch dev data. Defaults
+    # to DATABASE_URL with a "_test" suffix on the DB name.
+    TEST_DATABASE_URL: str = (
+        "postgresql+asyncpg://conciliador:conciliador@db:5432/autoconciliador_test"
+    )
+
     # --- JWT auth (Phase 4) ---
     # Secret used to sign access tokens. MUST be overridden in .env with a
     # strong random value (e.g. `openssl rand -hex 32`). The default is only

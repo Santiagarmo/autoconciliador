@@ -32,25 +32,28 @@ async function handleSubmit(): Promise<void> {
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-paper">
-    <div class="relative hidden w-1/2 overflow-hidden bg-ink text-paper md:block">
+  <div class="flex min-h-screen bg-surface-raised">
+    <div class="relative hidden w-1/2 overflow-hidden border-r border-line bg-surface text-fg md:block">
       <div
-        class="pointer-events-none absolute inset-0 opacity-[0.07]"
+        class="pointer-events-none absolute inset-0 animate-grid-drift opacity-[0.07]"
         style="background-image: repeating-linear-gradient(to bottom, transparent, transparent 47px, currentColor 47px, currentColor 48px)"
       />
-      <div class="stagger relative flex h-full flex-col justify-between px-12 py-14">
-        <span class="font-mono text-xs uppercase tracking-[0.2em] text-paper/60">
-          AC / Libro mayor digital
+      <div
+        class="pointer-events-none absolute inset-x-0 top-0 h-24 animate-scanline bg-gradient-to-b from-transparent via-steel/25 to-transparent"
+      />
+      <div class="stagger relative flex h-full flex-col justify-between px-12 py-14" style="--stagger-step: 70ms">
+        <span class="font-mono text-xs uppercase tracking-[0.2em] text-fg/50">
+          AC / Terminal de conciliación
         </span>
-        <div class="flex flex-col gap-4">
-          <h1 class="font-display text-6xl font-medium leading-[0.95]">
+        <div class="stagger flex flex-col gap-4" style="--stagger-step: 70ms">
+          <h1 class="animate-rise-lg font-display text-display">
             Auto<br />Conciliador
           </h1>
-          <p class="max-w-xs font-mono text-sm text-paper/60">
+          <p class="max-w-xs font-mono text-sm text-fg/60">
             Conciliación bancaria B2B para ventas por WhatsApp.
           </p>
         </div>
-        <p class="font-mono text-[11px] uppercase tracking-[0.14em] text-paper/40">
+        <p class="font-mono text-[11px] uppercase tracking-[0.14em] text-fg/40">
           Pedidos · Pagos · Movimientos · Conciliaciones
         </p>
       </div>
@@ -59,17 +62,17 @@ async function handleSubmit(): Promise<void> {
     <div class="flex flex-1 items-center justify-center px-6 py-14">
       <div class="stagger w-full max-w-sm">
         <div class="mb-8 md:hidden">
-          <h1 class="font-display text-3xl text-ink">AutoConciliador</h1>
-          <p class="mt-1 font-mono text-xs text-ink-faint">Conciliación bancaria B2B por WhatsApp</p>
+          <h1 class="font-display text-title text-fg">AutoConciliador</h1>
+          <p class="mt-1 font-mono text-xs text-fg-faint">Conciliación bancaria B2B por WhatsApp</p>
         </div>
 
-        <p class="mb-6 font-mono text-[11px] uppercase tracking-[0.18em] text-ink-faint">Acceso operador</p>
+        <p class="mb-6 font-mono text-[11px] uppercase tracking-[0.18em] text-fg-faint">Acceso operador</p>
 
-        <form class="flex flex-col gap-5" @submit.prevent="handleSubmit">
+        <form class="stagger flex flex-col gap-5" style="--stagger-step: 70ms" @submit.prevent="handleSubmit">
           <BaseInput v-model="email" type="email" label="Email" placeholder="operador@empresa.com" required />
           <BaseInput v-model="password" type="password" label="Contraseña" required />
 
-          <p v-if="errorMessage" class="border-l-2 border-oxide bg-oxide/5 px-3 py-2 text-sm text-oxide">
+          <p v-if="errorMessage" class="rounded-sm border-l-2 border-signal-neg bg-signal-neg/10 px-3 py-2 text-sm text-signal-neg">
             {{ errorMessage }}
           </p>
 
