@@ -53,3 +53,15 @@ async def test_ingesta_requiere_auth(client) -> None:
         files={"archivo": ("x.pdf", b"data", "application/pdf")},
     )
     assert resp.status_code == 401
+
+
+async def test_listar_verificaciones_200(client, as_role) -> None:
+    as_role(RolUsuario.ASESOR)
+    resp = await client.get("/api/movimientos/verificaciones")
+    assert resp.status_code == 200
+    assert resp.json() == []
+
+
+async def test_listar_verificaciones_requiere_auth(client) -> None:
+    resp = await client.get("/api/movimientos/verificaciones")
+    assert resp.status_code == 401

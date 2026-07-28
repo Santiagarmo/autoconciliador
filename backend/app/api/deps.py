@@ -26,10 +26,12 @@ from app.repositories import (
     IPagoDeclaradoRepository,
     IPedidoRepository,
     IUserRepository,
+    IVerificacionExtractoRepository,
     MovimientoBancarioRepository,
     PagoDeclaradoRepository,
     PedidoRepository,
     UserRepository,
+    VerificacionExtractoRepository,
 )
 from app.services.reconciliation_service import ReconciliationService
 
@@ -62,6 +64,12 @@ def get_user_repository(session: SessionDep) -> IUserRepository:
     return UserRepository(session)
 
 
+def get_verificacion_extracto_repository(
+    session: SessionDep,
+) -> IVerificacionExtractoRepository:
+    return VerificacionExtractoRepository(session)
+
+
 PedidoRepositoryDep = Annotated[
     IPedidoRepository, Depends(get_pedido_repository)
 ]
@@ -75,6 +83,10 @@ ConciliacionRepositoryDep = Annotated[
     IConciliacionRepository, Depends(get_conciliacion_repository)
 ]
 UserRepositoryDep = Annotated[IUserRepository, Depends(get_user_repository)]
+VerificacionExtractoRepositoryDep = Annotated[
+    IVerificacionExtractoRepository,
+    Depends(get_verificacion_extracto_repository),
+]
 
 
 # --- Service providers -----------------------------------------------------

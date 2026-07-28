@@ -82,11 +82,25 @@ async def test_reingesta_misma_cartola_es_idempotente(
 async def test_ingesta_pdf_corrupto_no_explota_en_silencio(
     committing_session, real_async_session_local
 ) -> None:
-    """Documents a real defect (see docs/QA-INTEGRAL-2026-07.md, severidad
+    """Documented a real defect (see docs/QA-INTEGRAL-2026-07.md, severidad
     Alta): a malformed PDF raises inside the background task, which FastAPI
-    already responded 202 for. The exception here proves nothing in the HTTP
-    layer will ever see it — it only reaches server logs."""
+    already responded 202 for, and the exception only reached server logs.
+
+    Still raises (kept for process-supervision/log visibility), but now ALSO
+    leaves a durable, queryable VerificacionExtracto(resultado=ERROR) row —
+    that's the regression-test half of this test."""
     import pytest
+
+    from app.domain.enums import ResultadoVerificacion
+    from app.repositories.verificacion_extracto_repository import (
+        VerificacionExtractoRepository,
+    )
 
     with pytest.raises(Exception):
         await movimientos_module._ingest_and_reconcile("BANCOLOMBIA", b"%PDF-broken-not-a-real-pdf")
+
+    verificaciones = await VerificacionExtractoRepository(committing_session).list_recientes()
+    assert len(verificaciones) == 1
+    assert verificaciones[0].resultado is ResultadoVerificacion.ERROR
+    assert verificaciones[0].error is not None
+    assert verificaciones[0].banco == "BANCOLOMBIA"

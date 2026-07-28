@@ -40,3 +40,15 @@ class RolUsuario(str, enum.Enum):
 
     ASESOR = "ASESOR"
     AUDITOR = "AUDITOR"
+
+
+class ResultadoVerificacion(str, enum.Enum):
+    """Verdict of ``StatementVerifier`` (and, later, ``StatementReviewer``)
+    for one statement ingestion. Deliberately not named after "auditor" —
+    that word already means the human ``RolUsuario.AUDITOR`` in this domain.
+    """
+
+    OK = "OK"
+    DISCREPANCIA = "DISCREPANCIA"
+    NO_VERIFICABLE = "NO_VERIFICABLE"
+    ERROR = "ERROR"

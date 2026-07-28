@@ -41,5 +41,19 @@ class Settings(BaseSettings):
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
 
+    # --- StatementReviewer (tier 2, LLM second opinion — see llm_reviewer.py) ---
+    # Off by default: NullStatementReviewer, zero cost, zero dependency. The
+    # model (Qwen 2.5 7B Instruct) runs on a separate machine with a GPU, NOT
+    # this host — this backend only ever speaks HTTP to an OpenAI-compatible
+    # endpoint. If this project is deployed onto that same GPU machine,
+    # LLM_BASE_URL is simply localhost/the docker-network service name there
+    # — the code doesn't care which; only these 6 vars change per deploy.
+    LLM_REVIEW_ENABLED: bool = False
+    LLM_BASE_URL: str = "http://localhost:11434/v1"
+    LLM_MODEL: str = "qwen2.5:7b-instruct"
+    LLM_API_KEY: str = ""
+    LLM_TIMEOUT_SECONDS: float = 90.0
+    LLM_MAX_LINEAS_CONTEXTO: int = 40
+
 
 settings = Settings()

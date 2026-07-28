@@ -11,17 +11,19 @@ import {
   ESTADO_MOVIMIENTO_META,
   ESTADO_PAGO_META,
   ESTADO_PEDIDO_META,
+  RESULTADO_VERIFICACION_META,
   TIPO_CONCILIACION_META,
   type BadgeVariant,
   type EstadoMovimiento,
   type EstadoPago,
   type EstadoPedido,
+  type ResultadoVerificacion,
   type TipoConciliacion,
 } from "@/types/enums";
 
 const props = defineProps<{
-  kind: "pedido" | "pago" | "movimiento" | "conciliacion";
-  estado: EstadoPedido | EstadoPago | EstadoMovimiento | TipoConciliacion;
+  kind: "pedido" | "pago" | "movimiento" | "conciliacion" | "verificacion";
+  estado: EstadoPedido | EstadoPago | EstadoMovimiento | TipoConciliacion | ResultadoVerificacion;
 }>();
 
 interface StatusMeta {
@@ -34,6 +36,7 @@ const META_BY_KIND: Record<typeof props.kind, Record<string, StatusMeta>> = {
   pago: ESTADO_PAGO_META,
   movimiento: ESTADO_MOVIMIENTO_META,
   conciliacion: TIPO_CONCILIACION_META,
+  verificacion: RESULTADO_VERIFICACION_META,
 };
 
 const meta = computed<StatusMeta>(() => {

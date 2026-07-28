@@ -33,6 +33,11 @@ from app.models.pago_declarado import PagoDeclarado
 from app.models.pedido import Pedido
 from app.models.user import Usuario
 from app.schemas.movimiento_bancario import MovimientoBancarioParsed
+from app.services.llm_reviewer import (
+    StatementReviewer,
+    StatementReviewRequest,
+    StatementReviewVerdict,
+)
 from app.workers.base import BankParserStrategy
 
 
@@ -84,7 +89,8 @@ async def committing_session():
             await conn.execute(
                 text(
                     "TRUNCATE conciliaciones, movimientos_bancarios, "
-                    "pagos_declarados, pedidos RESTART IDENTITY CASCADE"
+                    "pagos_declarados, pedidos, verificaciones_extracto "
+                    "RESTART IDENTITY CASCADE"
                 )
             )
         await test_engine.dispose()
@@ -234,3 +240,23 @@ class StubParser(BankParserStrategy):
 
     async def parse(self, source: bytes | str) -> list[MovimientoBancarioParsed]:
         return list(self._rows)
+
+
+# --- Test-only reviewer strategy (no LLM endpoint needed) -------------------
+
+class StubReviewer(StatementReviewer):
+    """Records every call and returns a canned verdict — same idiom as
+    ``StubParser``. Lets a test assert the tier-2 escalation path is called
+    exactly once on DISCREPANCIA and zero times on OK, with no model."""
+
+    def __init__(self, verdict: StatementReviewVerdict | None = None) -> None:
+        self.verdict = verdict or StatementReviewVerdict(
+            veredicto="INDETERMINADO", confianza=0.0, explicacion="stub"
+        )
+        self.calls: list[StatementReviewRequest] = []
+
+    async def review(
+        self, request: StatementReviewRequest
+    ) -> StatementReviewVerdict | None:
+        self.calls.append(request)
+        return self.verdict

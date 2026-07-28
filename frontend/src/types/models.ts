@@ -9,6 +9,7 @@ import type {
   EstadoMovimiento,
   EstadoPago,
   EstadoPedido,
+  ResultadoVerificacion,
   RolUsuario,
   TipoConciliacion,
 } from "./enums";
@@ -82,6 +83,23 @@ export interface MovimientoBancarioRead {
   descripcion_concepto: string;
   hash_idempotencia: string;
   estado_movimiento: EstadoMovimiento;
+  created_at: string;
+}
+
+export interface VerificacionExtractoRead {
+  id: string;
+  banco: string;
+  resultado: ResultadoVerificacion;
+  filas_emitidas: number;
+  filas_candidatas: number;
+  insertados: number;
+  omitidos: number;
+  hallazgos: Record<string, unknown>[];
+  hash_extracto: string | null;
+  error: string | null;
+  revisado_por_llm: boolean;
+  modelo_llm: string | null;
+  revision_llm: Record<string, unknown> | null;
   created_at: string;
 }
 

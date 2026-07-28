@@ -4,13 +4,13 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from decimal import Decimal
 
-from app.domain.enums import EstadoMovimiento
+from app.domain.enums import EstadoMovimiento, ResultadoVerificacion
 from app.repositories.movimiento_bancario_repository import (
     MovimientoBancarioRepository,
 )
 from app.schemas.movimiento_bancario import MovimientoBancarioParsed
 from app.services.pdf_ingestion_service import PDFIngestionService
-from tests.conftest import StubParser
+from tests.conftest import StubParser, StubReviewer
 
 
 def _row(descripcion: str, monto="100000.00", ref=None) -> MovimientoBancarioParsed:
@@ -70,3 +70,60 @@ async def test_normalization_collapses_whitespace(session):
     summary = await PDFIngestionService(session, StubParser(rows)).ingest(b"x")
     assert summary.insertados == 1
     assert summary.omitidos == 1
+
+
+async def test_reviewer_escalado_solo_en_discrepancia(session):
+    # Two rows whose saldo chain doesn't add up → CADENA_SALDOS CRITICO →
+    # DISCREPANCIA, even with StubParser's bare parse_document default (no
+    # candidatas/resumen) — the escalation path must still fire.
+    rows = [
+        _row("PAGO PEDIDO PED-1", monto="100000.00"),
+        MovimientoBancarioParsed(
+            banco_origen="NEQUI",
+            fecha_movimiento=datetime(2026, 7, 20, 9, 0, tzinfo=timezone.utc),
+            monto_real=Decimal("100000.00"),
+            saldo_posterior=Decimal("999999.00"),  # doesn't chain from 900000.00
+            numero_referencia=None,
+            descripcion_concepto="PAGO PEDIDO PED-2",
+        ),
+    ]
+    reviewer = StubReviewer()
+    summary = await PDFIngestionService(
+        session, StubParser(rows), reviewer=reviewer
+    ).ingest(b"x")
+
+    assert summary.verificacion is not None
+    assert summary.verificacion.resultado is ResultadoVerificacion.DISCREPANCIA
+    assert len(reviewer.calls) == 1
+
+
+async def test_reviewer_no_escalado_en_ok(session):
+    # _row()'s fixed saldo_posterior doesn't chain across rows on its own —
+    # build an explicitly consistent 2-row chain so CADENA_SALDOS actually
+    # passes (a real OK verdict), not just "no checks ran".
+    rows = [
+        MovimientoBancarioParsed(
+            banco_origen="NEQUI",
+            fecha_movimiento=datetime(2026, 7, 20, 9, 0, tzinfo=timezone.utc),
+            monto_real=Decimal("100000.00"),
+            saldo_posterior=Decimal("900000.00"),
+            numero_referencia=None,
+            descripcion_concepto="PAGO PEDIDO PED-1",
+        ),
+        MovimientoBancarioParsed(
+            banco_origen="NEQUI",
+            fecha_movimiento=datetime(2026, 7, 20, 9, 0, tzinfo=timezone.utc),
+            monto_real=Decimal("50000.00"),
+            saldo_posterior=Decimal("950000.00"),
+            numero_referencia=None,
+            descripcion_concepto="PAGO PEDIDO PED-2",
+        ),
+    ]
+    reviewer = StubReviewer()
+    summary = await PDFIngestionService(
+        session, StubParser(rows), reviewer=reviewer
+    ).ingest(b"x")
+
+    assert summary.verificacion is not None
+    assert summary.verificacion.resultado is ResultadoVerificacion.OK
+    assert len(reviewer.calls) == 0

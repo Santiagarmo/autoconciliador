@@ -4,6 +4,7 @@ from app.models.movimiento_bancario import MovimientoBancario
 from app.models.pago_declarado import PagoDeclarado
 from app.models.pedido import Pedido
 from app.models.user import Usuario
+from app.models.verificacion_extracto import VerificacionExtracto
 
 __all__ = [
     "Pedido",
@@ -11,4 +12,5 @@ __all__ = [
     "MovimientoBancario",
     "Conciliacion",
     "Usuario",
+    "VerificacionExtracto",
 ]

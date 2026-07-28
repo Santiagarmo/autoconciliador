@@ -11,7 +11,7 @@ import SpinnerLoader from "@/components/ui/SpinnerLoader.vue";
 import { extractErrorMessage } from "@/api/http";
 import { useMovimientosStore } from "@/stores/movimientos.store";
 import { useToastStore } from "@/stores/toast.store";
-import type { MovimientoBancarioRead } from "@/types/models";
+import type { MovimientoBancarioRead, VerificacionExtractoRead } from "@/types/models";
 import { formatCurrency, formatDateTime } from "@/utils/format";
 
 const movimientosStore = useMovimientosStore();
@@ -28,8 +28,20 @@ const columns: TableColumn<MovimientoBancarioRead>[] = [
   { key: "estado_movimiento", label: "Estado" },
 ];
 
+const verificacionColumns: TableColumn<VerificacionExtractoRead>[] = [
+  { key: "banco", label: "Banco" },
+  { key: "created_at", label: "Fecha", render: (row) => formatDateTime(row.created_at) },
+  { key: "resultado", label: "Resultado" },
+  { key: "filas_emitidas", label: "Filas", align: "right" },
+  {
+    key: "hallazgos",
+    label: "Hallazgos",
+    render: (row) => (row.hallazgos.length > 0 ? String(row.hallazgos.length) : "—"),
+  },
+];
+
 async function load(): Promise<void> {
-  await movimientosStore.fetchAll();
+  await Promise.all([movimientosStore.fetchAll(), movimientosStore.fetchVerificaciones()]);
   if (movimientosStore.error) toast.error(movimientosStore.error);
 }
 
@@ -57,6 +69,19 @@ onMounted(load);
         <BaseButton variant="secondary" @click="load">Refrescar</BaseButton>
         <BaseButton @click="isModalOpen = true">+ Subir extracto</BaseButton>
       </div>
+    </div>
+
+    <div v-if="movimientosStore.verificaciones.length > 0" class="flex flex-col gap-3">
+      <h2 class="font-mono text-xs uppercase tracking-[0.14em] text-fg-faint">Últimas ingestas</h2>
+      <BaseTable
+        :columns="verificacionColumns"
+        :rows="movimientosStore.verificaciones"
+        :row-key="(row) => row.id"
+      >
+        <template #cell-resultado="{ row }">
+          <EstadoBadge kind="verificacion" :estado="row.resultado" />
+        </template>
+      </BaseTable>
     </div>
 
     <Transition name="swap" mode="out-in">

@@ -20,6 +20,10 @@ from app.repositories.user_repository import (
     IUserRepository,
     UserRepository,
 )
+from app.repositories.verificacion_extracto_repository import (
+    IVerificacionExtractoRepository,
+    VerificacionExtractoRepository,
+)
 
 __all__ = [
     "AbstractRepository",
@@ -34,4 +38,6 @@ __all__ = [
     "ConciliacionRepository",
     "IUserRepository",
     "UserRepository",
+    "IVerificacionExtractoRepository",
+    "VerificacionExtractoRepository",
 ]

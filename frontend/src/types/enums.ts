@@ -38,6 +38,14 @@ export enum RolUsuario {
   AUDITOR = "AUDITOR",
 }
 
+/** Veredicto de StatementVerifier (tier 1) para una ingesta de extracto. */
+export enum ResultadoVerificacion {
+  OK = "OK",
+  DISCREPANCIA = "DISCREPANCIA",
+  NO_VERIFICABLE = "NO_VERIFICABLE",
+  ERROR = "ERROR",
+}
+
 /** Variantes de color soportadas por `BaseBadge`. */
 export type BadgeVariant =
   | "neutral"
@@ -81,6 +89,13 @@ export const TIPO_CONCILIACION_META: Record<TipoConciliacion, StatusMeta> = {
 export const ROL_USUARIO_META: Record<RolUsuario, StatusMeta> = {
   [RolUsuario.ASESOR]: { label: "Asesor", variant: "info" },
   [RolUsuario.AUDITOR]: { label: "Auditor", variant: "success" },
+};
+
+export const RESULTADO_VERIFICACION_META: Record<ResultadoVerificacion, StatusMeta> = {
+  [ResultadoVerificacion.OK]: { label: "OK", variant: "success" },
+  [ResultadoVerificacion.DISCREPANCIA]: { label: "Discrepancia", variant: "danger" },
+  [ResultadoVerificacion.NO_VERIFICABLE]: { label: "No verificable", variant: "neutral" },
+  [ResultadoVerificacion.ERROR]: { label: "Error", variant: "danger" },
 };
 
 /**
